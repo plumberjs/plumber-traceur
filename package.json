@@ -1,0 +1,39 @@
+{
+  "name": "plumber-traceur",
+  "version": "0.3.0",
+  "description": "Traceur operation for Plumber pipelines",
+  "main": "index",
+  "dependencies": {
+    "plumber": "~0.3.0",
+    "mercator": "~0.1.4",
+    "highland": "~1.16.2",
+    "traceur": "0.0.32"
+  },
+  "devDependencies": {
+    "plumber-util-test": "~0.3.0",
+    "mocha": "~1.16.2",
+    "chai": "~1.8.1",
+    "source-map": "~0.1.31"
+  },
+  "scripts": {
+    "test": "node_modules/.bin/mocha"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/plumberjs/plumber-traceur.git"
+  },
+  "keywords": [
+    "build",
+    "assets",
+    "pipeline",
+    "plumber",
+    "traceur",
+    "es6",
+    "harmony"
+  ],
+  "author": "Sébastien Cevey <seb@cine7.net>",
+  "license": "GPL",
+  "bugs": {
+    "url": "https://github.com/plumberjs/plumber-traceur/issues"
+  }
+}
