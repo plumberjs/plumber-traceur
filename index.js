@@ -12,14 +12,12 @@ function transpile(resource) {
         var output;
 	try {
             var config = {file: resource.filename()};
-            var sourceMapGenerator = new SourceMapGenerator(config);
 	    output = traceur.compile(resource.data(), {
                 filename: resource.filename(),
                 // FIXME: option for
                 // modules: 'commonjs',
                 // modules: 'amd',
-                sourceMaps: true,
-                sourceMapGenerator: sourceMapGenerator
+                sourceMap: true
             });
 
 	    if (output.errors.length === 0) {
@@ -51,7 +49,7 @@ module.exports = function (options) {
     return operation(function(resources) {
         return resources.flatMap(function(resource) {
             return transpile(resource).map(function(output) {
-                var sourceMap// = SourceMap.fromMapData(output.sourceMap)
+                var sourceMap = SourceMap.fromMapData(output.sourceMap);
                 return resource.withData(output.js, sourceMap);
             }).errors(function(error, push) {
                 var errorReport = new Report({
