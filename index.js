@@ -5,7 +5,6 @@ var SourceMap = require('mercator').SourceMap;
 var highland = require('highland');
 
 var traceur = require('traceur');
-var SourceMapGenerator = require('source-map').SourceMapGenerator;
 
 function transpile(resource) {
     return highland(function(push, next) {
