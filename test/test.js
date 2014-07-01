@@ -27,22 +27,38 @@ describe('traceur', function(){
     // });
 
 
-    it('should be a function', function(){
-        traceur.should.be.a('function');
+    it('should be an object', function(){
+        traceur.should.be.an('object');
     });
 
-    it('should return a function', function(){
-        traceur().should.be.a('function');
+    describe('#toAmd', function() {
+        it('should be a function', function(){
+            traceur.toAmd.should.be.a('function');
+        });
+
+        it('should return a function', function(){
+            traceur.toAmd().should.be.a('function');
+        });
+    });
+
+    describe('#toCommonJs', function() {
+        it('should be a function', function(){
+            traceur.toCommonJs.should.be.a('function');
+        });
+
+        it('should return a function', function(){
+            traceur.toCommonJs().should.be.a('function');
+        });
     });
 
     // TODO: test options
 
-    describe('when passed a ES6 file', function() {
+    describe('#toCommonJs when passed a ES6 file', function() {
         var transformedResources;
         var mainData = fs.readFileSync('test/fixtures/main.js').toString();
 
         beforeEach(function() {
-            transformedResources = runOperation(traceur(), [
+            transformedResources = runOperation(traceur.toCommonJs(), [
                 createResource({path: 'test/fixtures/main.js', type: 'javascript', data: mainData})
             ]).resources;
         });
@@ -55,8 +71,8 @@ describe('traceur', function(){
             });
         });
 
-        it('should return a resource with legacy JS data', function(done){
-            var outputMain = fs.readFileSync('test/fixtures/main.compiled.js').toString();
+        it('should return a resource with CommonJS data', function(done){
+            var outputMain = fs.readFileSync('test/fixtures/main.commonjs.js').toString();
             return transformedResources.toArray(function(resources) {
                 resources[0].data().should.equal(outputMain);
                 done();
@@ -158,6 +174,24 @@ describe('traceur', function(){
             });
         });
     });
+    describe('#toCommonJs when passed a ES6 file', function() {
+        var transformedResources;
+        var mainData = fs.readFileSync('test/fixtures/main.js').toString();
+
+        beforeEach(function() {
+            transformedResources = runOperation(traceur.toAmd(), [
+                createResource({path: 'test/fixtures/main.js', type: 'javascript', data: mainData})
+            ]).resources;
+        });
+
+        it('should return a resource with AMD data', function(done){
+            var outputMain = fs.readFileSync('test/fixtures/main.amd.js').toString();
+            return transformedResources.toArray(function(resources) {
+                resources[0].data().should.equal(outputMain);
+                done();
+            });
+        });
+    });
 
     // describe('when passed a traceur file with a source map', function() {
     //     var transformedResources;
@@ -243,7 +277,7 @@ describe('traceur', function(){
                 data: 'var f = (x) => {'
             });
 
-            return runOperation(traceur(), [missingClosingBracket]).resources.toArray(function(reports) {
+            return runOperation(traceur.toCommonJs(), [missingClosingBracket]).resources.toArray(function(reports) {
                 reports.length.should.equal(1);
                 reports[0].should.be.instanceof(Report);
                 reports[0].writtenResource.should.equal(missingClosingBracket);
@@ -251,30 +285,8 @@ describe('traceur', function(){
                 reports[0].success.should.equal(false);
                 reports[0].errors[0].line.should.equal(1);
                 reports[0].errors[0].column.should.equal(17);
-                reports[0].errors[0].message.should.equal("'}' expected");
+                reports[0].errors[0].message.should.equal("Unexpected token End of File");
                 // reports[0].errors[0].context.should.equal('.foo {');
-                done();
-            });
-        });
-
-
-        it.skip('should return an error report if using undeclared var', function(done){
-            var undeclaredVar = createResource({
-                path: 'test/fixtures/undeclared.js',
-                type: 'javascript',
-                data: 'x = 42;'
-            });
-
-            return runOperation(traceur(), [undeclaredVar]).resources.toArray(function(reports) {
-                reports.length.should.equal(1);
-                reports[0].should.be.instanceof(Report);
-                reports[0].writtenResource.should.equal(undeclaredVar);
-                reports[0].type.should.equal('error');
-                reports[0].success.should.equal(false);
-                reports[0].errors[0].line.should.equal(2);
-                reports[0].errors[0].column.should.equal(10);
-                reports[0].errors[0].message.should.equal('[Name] variable @missing is undefined');
-                reports[0].errors[0].context.should.equal('  border: @missing;');
                 done();
             });
         });
