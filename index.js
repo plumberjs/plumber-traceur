@@ -69,6 +69,6 @@ function traceurOp(options) {
 };
 
 module.exports = {
-    toAmd:      traceurOp({modules: 'amd'}),
+    toAmd:      traceurOp({modules: 'amd', moduleName: true}),
     toCommonJs: traceurOp({modules: 'commonjs'})
 };

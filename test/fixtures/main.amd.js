@@ -1,5 +1,6 @@
-define([], function() {
+define("main", [], function() {
   "use strict";
+  var __moduleName = "main";
   var x = (function(a) {
     return a * a;
   });
