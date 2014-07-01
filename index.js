@@ -3,21 +3,19 @@ var Report    = require('plumber').Report;
 var SourceMap = require('mercator').SourceMap;
 
 var highland = require('highland');
+var extend = require('extend');
 
 var traceur = require('traceur');
 
-function transpile(resource) {
+function transpile(resource, options) {
     return highland(function(push, next) {
         var output;
 	try {
             var config = {file: resource.filename()};
-	    output = traceur.compile(resource.data(), {
+	    output = traceur.compile(resource.data(), extend(options || {}, {
                 filename: resource.filename(),
-                // FIXME: option for
-                // modules: 'commonjs',
-                // modules: 'amd',
                 sourceMap: true
-            });
+            }));
 
 	    if (output.errors.length === 0) {
                 // Successful!
@@ -42,12 +40,13 @@ function transpile(resource) {
     });
 }
 
-module.exports = function (options) {
+function traceurOp(options) {
     // FIXME: options?
 
     return operation(function(resources) {
         return resources.flatMap(function(resource) {
-            return transpile(resource).map(function(output) {
+            return transpile(resource, options).map(function(output) {
+                // TODO: remap on input source map
                 var sourceMap = SourceMap.fromMapData(output.sourceMap);
                 return resource.withData(output.js, sourceMap);
             }).errors(function(error, push) {
@@ -66,4 +65,9 @@ module.exports = function (options) {
             });
         });
     });
+};
+
+module.exports = {
+    toAmd:      traceurOp({modules: 'amd'}),
+    toCommonJs: traceurOp({modules: 'commonjs'})
 };
