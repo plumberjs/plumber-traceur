@@ -42,29 +42,30 @@ function transpile(resource, options) {
 
 function traceurOp(options) {
     // FIXME: options?
-
-    return operation(function(resources) {
-        return resources.flatMap(function(resource) {
-            return transpile(resource, options).map(function(output) {
-                // TODO: remap on input source map
-                var sourceMap = SourceMap.fromMapData(output.sourceMap);
-                return resource.withData(output.js, sourceMap);
-            }).errors(function(error, push) {
-                var errorReport = new Report({
-                    resource: resource,
-                    type: 'error', // FIXME: ?
-                    success: false,
-                    errors: [{
-                        column:  error.column,
-                        line:    error.line,
-                        message: error.message
-                        // No context
-                    }]
+    return function() {
+        return operation(function(resources) {
+            return resources.flatMap(function(resource) {
+                return transpile(resource, options).map(function(output) {
+                    // TODO: remap on input source map
+                    var sourceMap = SourceMap.fromMapData(output.sourceMap);
+                    return resource.withData(output.js, sourceMap);
+                }).errors(function(error, push) {
+                    var errorReport = new Report({
+                        resource: resource,
+                        type: 'error', // FIXME: ?
+                        success: false,
+                        errors: [{
+                            column:  error.column,
+                            line:    error.line,
+                            message: error.message
+                            // No context
+                        }]
+                    });
+                    push(null, errorReport);
                 });
-                push(null, errorReport);
             });
         });
-    });
+    };
 };
 
 module.exports = {
