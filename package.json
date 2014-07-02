@@ -1,6 +1,6 @@
 {
   "name": "plumber-traceur",
-  "version": "0.3.2",
+  "version": "0.4.0",
   "description": "Traceur operation for Plumber pipelines",
   "main": "index",
   "dependencies": {
