@@ -1,14 +1,14 @@
 var operation = require('plumber').operation;
 var Report    = require('plumber').Report;
+var Rx        = require('plumber').Rx;
 var SourceMap = require('mercator').SourceMap;
 
-var highland = require('highland');
 var extend = require('extend');
 
 var traceur = require('traceur');
 
 function transpile(resource, options) {
-    return highland(function(push, next) {
+    return Rx.Observable.create(function(observer) {
         var output;
 	try {
             var config = {file: resource.filename()};
@@ -19,23 +19,23 @@ function transpile(resource, options) {
 
 	    if (output.errors.length === 0) {
                 // Successful!
-                push(null, output);
+                observer.onNext(output);
             } else {
                 output.errors.forEach(function(err) {
                     // Annoyingly, error is provided as a string
                     var details = err.match(/^(.+):(\d+):(\d+): (.*)/);
-	            push({
+	            observer.onError({
                         filename: details[1],
                         line:     Number(details[2]),
                         column:   Number(details[3]),
                         message:  details[4]
-                    }, null);
+                    });
                 });
             }
 	} catch (err) {
-	    push(err, null);
+	    observer.onError(err);
 	} finally {
-            push(null, highland.nil);
+            observer.onCompleted();
         }
     });
 }
@@ -49,7 +49,7 @@ function traceurOp(options) {
                     // TODO: remap on input source map
                     var sourceMap = SourceMap.fromMapData(output.sourceMap);
                     return resource.withData(output.js, sourceMap);
-                }).errors(function(error, push) {
+                }).catch(function(error) {
                     var errorReport = new Report({
                         resource: resource,
                         type: 'error', // FIXME: ?
@@ -61,7 +61,7 @@ function traceurOp(options) {
                             // No context
                         }]
                     });
-                    push(null, errorReport);
+                    return Rx.Observable.return(errorReport);
                 });
             });
         });
