@@ -21,19 +21,21 @@ function transpile(resource, options) {
                 // Successful!
                 observer.onNext(output);
             } else {
-                output.errors.forEach(function(err) {
+                var errors = output.errors.map(function(err) {
                     // Annoyingly, error is provided as a string
                     var details = err.match(/^(.+):(\d+):(\d+): (.*)/);
-	            observer.onError({
+                    return {
                         filename: details[1],
                         line:     Number(details[2]),
                         column:   Number(details[3]),
                         message:  details[4]
-                    });
+                    };
                 });
+                observer.onError(errors);
             }
 	} catch (err) {
-	    observer.onError(err);
+            // FIXME: map to error structure?
+            observer.onError([err]);
 	} finally {
             observer.onCompleted();
         }
@@ -49,19 +51,21 @@ function traceurOp(options) {
                     // TODO: remap on input source map
                     var sourceMap = SourceMap.fromMapData(output.sourceMap);
                     return resource.withData(output.js, sourceMap);
-                }).catch(function(error) {
-                    var errorReport = new Report({
-                        resource: resource,
-                        type: 'error', // FIXME: ?
-                        success: false,
-                        errors: [{
-                            column:  error.column,
-                            line:    error.line,
-                            message: error.message
-                            // No context
-                        }]
+                }).catch(function(errors) {
+                    var errorReports = errors.map(function(error) {
+                        return new Report({
+                            resource: resource,
+                            type: 'error', // FIXME: ?
+                            success: false,
+                            errors: [{
+                                column:  error.column,
+                                line:    error.line,
+                                message: error.message
+                                // No context
+                            }]
+                        });
                     });
-                    return Rx.Observable.return(errorReport);
+                    return Rx.Observable.fromArray(errorReports);
                 });
             });
         });
