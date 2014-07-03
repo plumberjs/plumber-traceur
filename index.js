@@ -1,14 +1,14 @@
 var operation = require('plumber').operation;
 var Report    = require('plumber').Report;
+var Rx        = require('plumber').Rx;
 var SourceMap = require('mercator').SourceMap;
 
-var highland = require('highland');
 var extend = require('extend');
 
 var traceur = require('traceur');
 
 function transpile(resource, options) {
-    return highland(function(push, next) {
+    return Rx.Observable.create(function(observer) {
         var output;
 	try {
             var config = {file: resource.filename()};
@@ -19,23 +19,25 @@ function transpile(resource, options) {
 
 	    if (output.errors.length === 0) {
                 // Successful!
-                push(null, output);
+                observer.onNext(output);
             } else {
-                output.errors.forEach(function(err) {
+                var errors = output.errors.map(function(err) {
                     // Annoyingly, error is provided as a string
                     var details = err.match(/^(.+):(\d+):(\d+): (.*)/);
-	            push({
+                    return {
                         filename: details[1],
                         line:     Number(details[2]),
                         column:   Number(details[3]),
                         message:  details[4]
-                    }, null);
+                    };
                 });
+                observer.onError(errors);
             }
 	} catch (err) {
-	    push(err, null);
+            // FIXME: map to error structure?
+            observer.onError([err]);
 	} finally {
-            push(null, highland.nil);
+            observer.onCompleted();
         }
     });
 }
@@ -49,19 +51,21 @@ function traceurOp(options) {
                     // TODO: remap on input source map
                     var sourceMap = SourceMap.fromMapData(output.sourceMap);
                     return resource.withData(output.js, sourceMap);
-                }).errors(function(error, push) {
-                    var errorReport = new Report({
-                        resource: resource,
-                        type: 'error', // FIXME: ?
-                        success: false,
-                        errors: [{
-                            column:  error.column,
-                            line:    error.line,
-                            message: error.message
-                            // No context
-                        }]
+                }).catch(function(errors) {
+                    var errorReports = errors.map(function(error) {
+                        return new Report({
+                            resource: resource,
+                            type: 'error', // FIXME: ?
+                            success: false,
+                            errors: [{
+                                column:  error.column,
+                                line:    error.line,
+                                message: error.message
+                                // No context
+                            }]
+                        });
                     });
-                    push(null, errorReport);
+                    return Rx.Observable.fromArray(errorReports);
                 });
             });
         });

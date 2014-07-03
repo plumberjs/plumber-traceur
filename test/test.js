@@ -6,6 +6,8 @@ var fs = require('fs');
 
 
 var runOperation = require('plumber-util-test').runOperation;
+var completeWithResources = require('plumber-util-test').completeWithResources;
+var runAndCompleteWith = require('plumber-util-test').runAndCompleteWith;
 
 var Resource = require('plumber').Resource;
 var Report = require('plumber').Report;
@@ -15,6 +17,10 @@ var traceur = require('..');
 
 function createResource(params) {
     return new Resource(params);
+}
+
+function resourcesError() {
+  chai.assert(false, "error in resources observable");
 }
 
 
@@ -64,23 +70,21 @@ describe('traceur', function(){
         });
 
         it('should return a single resource with the same filename', function(done){
-            return transformedResources.toArray(function(resources) {
+            completeWithResources(transformedResources, function(resources) {
                 resources.length.should.equal(1);
                 resources[0].filename().should.equal('main.js');
-                done();
-            });
+            }, resourcesError, done);
         });
 
         it('should return a resource with CommonJS data', function(done){
             var outputMain = fs.readFileSync('test/fixtures/main.commonjs.js').toString();
-            return transformedResources.toArray(function(resources) {
+            completeWithResources(transformedResources, function(resources) {
                 resources[0].data().should.equal(outputMain);
-                done();
-            });
+            }, resourcesError, done);
         });
 
         it.skip('should return a resource with a source map with correct properties', function(done){
-            return transformedResources.toArray(function(resources) {
+            completeWithResources(transformedResources, function(resources) {
                 var sourceMap = resources[0].sourceMap();
                 sourceMap.file.should.equal('main.css');
                 sourceMap.sources.should.deep.equal([
@@ -95,13 +99,11 @@ describe('traceur', function(){
                     ".plain {\n    color: red;\n}\n",
                     "@import \"other\";\n@import \"sub/helper\";\n@import (traceur) \"plain.css\";\n\nbody {\n    margin: 0;\n}"
                 ]);
-
-                done();
-            });
+            }, resourcesError, done);
         });
 
         it.skip('should return a resource with a source map with correct mappings', function(done){
-            return transformedResources.toArray(function(resources) {
+            completeWithResources(transformedResources, function(resources) {
                 var map = new SourceMapConsumer(resources[0].sourceMap());
 
                 /*
@@ -169,9 +171,7 @@ describe('traceur', function(){
                     column: 4,
                     name: null
                 });
-
-                done();
-            });
+            }, resourcesError, done);
         });
     });
     describe('#toCommonJs when passed a ES6 file', function() {
@@ -186,10 +186,9 @@ describe('traceur', function(){
 
         it('should return a resource with AMD data', function(done){
             var outputMain = fs.readFileSync('test/fixtures/main.amd.js').toString();
-            return transformedResources.toArray(function(resources) {
+            completeWithResources(transformedResources, function(resources) {
                 resources[0].data().should.equal(outputMain);
-                done();
-            });
+            }, resourcesError, done);
         });
     });
 
@@ -277,7 +276,7 @@ describe('traceur', function(){
                 data: 'var f = (x) => {'
             });
 
-            return runOperation(traceur.toCommonJs(), [missingClosingBracket]).resources.toArray(function(reports) {
+            runAndCompleteWith(traceur.toCommonJs(), [missingClosingBracket], function(reports) {
                 reports.length.should.equal(1);
                 reports[0].should.be.instanceof(Report);
                 reports[0].writtenResource.should.equal(missingClosingBracket);
@@ -287,8 +286,7 @@ describe('traceur', function(){
                 reports[0].errors[0].column.should.equal(17);
                 reports[0].errors[0].message.should.equal("Unexpected token End of File");
                 // reports[0].errors[0].context.should.equal('.foo {');
-                done();
-            });
+            }, resourcesError, done);
         });
     });
 });
