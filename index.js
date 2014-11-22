@@ -10,14 +10,14 @@ var traceur = require('traceur');
 function transpile(resource, options) {
     return Rx.Observable.create(function(observer) {
         var output;
-	try {
+        try {
             var config = {file: resource.filename()};
-	    output = traceur.compile(resource.data(), extend(options || {}, {
+            output = traceur.compile(resource.data(), extend(options || {}, {
                 filename: resource.filename(),
                 sourceMap: true
             }));
 
-	    if (output.errors.length === 0) {
+            if (output.errors.length === 0) {
                 // Successful!
                 observer.onNext(output);
             } else {
@@ -33,10 +33,10 @@ function transpile(resource, options) {
                 });
                 observer.onError(errors);
             }
-	} catch (err) {
+        } catch (err) {
             // FIXME: map to error structure?
             observer.onError([err]);
-	} finally {
+        } finally {
             observer.onCompleted();
         }
     });
