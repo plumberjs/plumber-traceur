@@ -5,8 +5,6 @@ var extend = require('extend');
 var traceur = require('traceur');
 
 function transpileResource(options, resource) {
-    var config = {file: resource.filename()};
-
     try {
         output = traceur.compile(resource.data(), extend(options || {}, {
             filename: resource.filename(),
