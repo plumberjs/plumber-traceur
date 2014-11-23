@@ -6,10 +6,15 @@ var traceur = require('traceur');
 
 function transpileResource(options, resource) {
     try {
+        var modulePath = resource.path()._dirname + '/' + resource.filename();
+        if (options.getModulePath) {
+            modulePath = options.getModulePath(modulePath);
+        }
+
         output = traceur.compile(resource.data(), extend(options || {}, {
             filename: resource.filename(),
             sourceMap: true
-        }), resource.path()._dirname + '/' + resource.filename());
+        }), modulePath);
 
         return resource.withData(output);
     }
@@ -31,8 +36,9 @@ function transpileResource(options, resource) {
     }
 }
 
-function traceurOp(options) {
-    // FIXME: options?
+function traceurOp(options, userOptions) {
+    Object.assign(options, userOptions);
+
     return operation(function(resources) {
         return resources.map(transpileResource.bind(this, options));
     });
