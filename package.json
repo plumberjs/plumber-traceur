@@ -4,13 +4,11 @@
   "description": "Traceur operation for Plumber pipelines",
   "main": "index",
   "dependencies": {
-    "mercator": "~0.1.4",
-    "highland": "~1.16.2",
-    "traceur": "~0.0.49",
+    "traceur": "~0.0.74",
     "extend": "~1.3.0"
   },
   "peerDependencies": {
-    "plumber": "~0.4.0"
+    "plumber": "~0.4.8"
   },
   "devDependencies": {
     "plumber-util-test": "~0.4.0",
